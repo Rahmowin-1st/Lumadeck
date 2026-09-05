@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
+<meta name="theme-color" content="#f4f6f2" />
+<title>LumaDeck — Presentation Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<canvas id="glassCanvas" aria-hidden="true"></canvas>
+<div id="app" class="app-shell">
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient-card ambient-a ambient-preview" aria-hidden="true"><span>IRREGULAR VERBS</span><b>GO → WENT → GONE</b><i></i></div>
+    <div class="ambient-card ambient-b ambient-preview" aria-hidden="true"><span>VISUAL STORY</span><b>Pattern. Practice. Remember.</b><i></i></div>
+    <div class="ambient-card ambient-c ambient-preview" aria-hidden="true"><span>10 SLIDES</span><b>Built for attention.</b><i></i></div>
+    <div class="ambient-grid"></div>
+    <div class="ambient-orb orb-a"></div>
+    <div class="ambient-orb orb-b"></div>
+    <div class="ambient-orb orb-c"></div>
+  </div>
+
+  <header class="app-head glass-host" data-glass="regular" data-radius="32">
+    <div class="brand-row">
+      <a class="brand" href="#" aria-label="LumaDeck home">
+        <span class="brand-mark">L</span>
+        <span class="brand-copy"><b>LumaDeck</b><small>Presentation Studio</small></span>
+      </a>
+      <button id="accountBtn" class="account-btn glass-host" data-glass="clear" data-radius="22" aria-label="Account">
+        <span class="account-dot"></span><span id="accountLabel">Sign in</span>
+      </button>
+    </div>
+
+    <div id="themeSwitch" class="theme-switch glass-host" data-glass="regular" data-radius="27" aria-label="Theme selector">
+      <div class="theme-bubble glass-host" id="themeBubble" data-glass="interactive" data-radius="22"></div>
+      <button data-theme="system" class="theme-option"><span class="theme-icon">▣</span><span>System</span></button>
+      <button data-theme="light" class="theme-option"><span class="theme-icon">☼</span><span>Light</span></button>
+      <button data-theme="dark" class="theme-option"><span class="theme-icon">◐</span><span>Dark</span></button>
+    </div>
+  </header>
+
+  <main class="home" id="homeView">
+    <section class="hero">
+      <span class="eyebrow">AI PRESENTATION STUDIO</span>
+      <h1>Describe it.<br><em>We build the deck.</em></h1>
+      <p class="hero-sub">Write the presentation you need. Your request, progress and finished file stay safely in your account.</p>
+      <div class="steps" aria-label="How it works">
+        <span><b>1</b> Write</span><i></i><span><b>2</b> Send</span><i></i><span><b>3</b> View & download</span>
+      </div>
+    </section>
+
+    <section class="composer-shell surface">
+      <div class="composer-head">
+        <div class="composer-label"><span>NEW PRESENTATION</span><strong>What should we build?</strong></div>
+        <span class="studio-live"><i></i> Studio ready</span>
+      </div>
+      <div class="build-bar">
+        <div class="format-block">
+          <small>OUTPUT FORMAT</small>
+          <div id="formatSwitch" class="format-switch glass-host" data-glass="regular" data-radius="22" aria-label="Output format">
+            <div id="formatBubble" class="format-bubble glass-host" data-glass="interactive" data-radius="18"></div>
+            <button data-format="pptx" class="format-option"><span>▰</span>PPTX</button>
+            <button data-format="pdf" class="format-option"><span>▤</span>PDF</button>
+          </div>
+        </div>
+        <div class="language-lock"><small>LANGUAGE</small><span>English <b>LOCKED</b></span></div>
+      </div>
+      <textarea id="prompt" rows="8" placeholder="Example: Create a 10-slide English lesson about irregular verbs for students. Explain clearly, use examples, diagrams and premium visuals…" aria-label="Presentation instructions"></textarea>
+      <div class="composer-hint"><span>Write as much as you need.</span><span>10 slides · <b id="formatHint">PPTX</b></span></div>
+      <button id="sendBtn" class="send-btn glass-host" data-glass="interactive" data-radius="31">
+        <span><small id="sendKicker">BUILD PPTX</small><b id="sendText">Send presentation</b></span><span class="send-arrow">↗</span>
+      </button>
+    </section>
+
+    <section class="history-section surface">
+      <div class="section-head">
+        <div><span class="eyebrow">YOUR ACCOUNT</span><h2>Presentations</h2></div>
+        <span id="historyCount" class="count-chip">0</span>
+      </div>
+      <div id="historyList" class="history-list">
+        <div class="empty-state"><span class="empty-symbol">↗</span><b>Your presentations will appear here.</b><p>Send your first request above.</p></div>
+      </div>
+    </section>
+
+    <div class="trust-row"><span>Private account</span><i></i><span>Persistent history</span><i></i><span>Mobile first</span></div>
+  </main>
+
+  <section id="viewer" class="viewer" aria-hidden="true">
+    <div class="viewer-backdrop"></div>
+    <div class="viewer-topbar glass-host" data-glass="regular" data-radius="28">
+      <div class="viewer-title-row">
+        <button id="viewerClose" class="round-btn glass-host" data-glass="interactive" data-radius="23" aria-label="Close presentation">‹</button>
+        <div class="viewer-title"><small id="viewerKind">PRESENTATION</small><b id="viewerTitle">Presentation</b></div>
+        <span id="viewerPage" class="viewer-page">1/10</span>
+      </div>
+      <div id="thumbStrip" class="thumb-strip" aria-label="Slides"></div>
+    </div>
+    <div id="slideStage" class="slide-stage" aria-label="Current slide">
+      <div id="slideFrame" class="slide-frame"><img id="mainSlide" alt="Current presentation slide" draggable="false" /></div>
+      <div class="swipe-hint"><span>Swipe</span><i></i><span>next</span></div>
+    </div>
+    <div id="viewerActions" class="viewer-actions glass-host" data-glass="regular" data-radius="30">
+      <button id="pptxBtn" class="viewer-action glass-host" data-glass="clear" data-radius="23"><span class="action-icon">↓</span><span id="pptxLabel">PPTX</span></button>
+      <button id="pdfBtn" class="viewer-action glass-host" data-glass="clear" data-radius="23"><span class="action-icon">⇄</span><span id="pdfLabel">PDF</span></button>
+      <button id="shareBtn" class="viewer-action primary-action glass-host" data-glass="interactive" data-radius="23"><span class="action-icon">⌯</span><span id="shareLabel">Share PPTX</span></button>
+    </div>
+  </section>
+
+  <section id="authSheet" class="sheet" aria-hidden="true">
+    <button class="sheet-backdrop" id="authBackdrop" aria-label="Close"></button>
+    <div class="sheet-card glass-host" data-glass="thick" data-radius="34">
+      <div class="sheet-grabber"></div>
+      <div class="auth-brand"><span class="brand-mark">L</span><span>LumaDeck</span></div>
+      <h2 id="authTitle">Welcome back</h2>
+      <p id="authSub">Sign in to see your requests and finished presentations on any device.</p>
+      <div class="auth-tabs glass-host" data-glass="regular" data-radius="17"><button id="signinTab" class="active">Sign in</button><button id="signupTab">Create account</button></div>
+      <label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" /></label>
+      <label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="10+ characters" /></label>
+      <div id="authError" class="auth-error"></div>
+      <button id="authSubmit" class="auth-submit glass-host" data-glass="interactive" data-radius="20">Sign in <span>↗</span></button>
+      <button id="signoutBtn" class="signout-btn hidden">Sign out</button>
+      <small class="security-note">Secure session · private account history</small>
+    </div>
+  </section>
+
+  <div id="toast" class="toast glass-host" data-glass="regular" data-radius="18" role="status"></div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
