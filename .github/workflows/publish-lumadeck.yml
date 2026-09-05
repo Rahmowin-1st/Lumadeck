@@ -1,0 +1,50 @@
+name: Publish LumaDeck Ultra
+
+on:
+  push:
+    paths:
+      - '.github/workflows/publish-lumadeck.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rebuild canonical production bundle
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64, gzip, json, shutil
+          parts = [Path(f'.source/index.gz.b64.{i}').read_text().strip() for i in range(5)]
+          html = gzip.decompress(base64.b64decode(''.join(parts)))
+          Path('index.html').write_bytes(html)
+          config = {
+            'rewrites': [
+              {'source': '/api/:path*', 'destination': 'https://lumadeck-mobile-1tzn3q2yt-shahboz.vercel.app/api/:path*'}
+            ],
+            'headers': [
+              {'source': '/(.*)', 'headers': [
+                {'key': 'X-Content-Type-Options', 'value': 'nosniff'},
+                {'key': 'Referrer-Policy', 'value': 'strict-origin-when-cross-origin'},
+                {'key': 'X-Frame-Options', 'value': 'DENY'},
+                {'key': 'Permissions-Policy', 'value': 'camera=(), microphone=(), geolocation=(), payment=()'},
+                {'key': 'Content-Security-Policy', 'value': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"}
+              ]}
+            ]
+          }
+          Path('vercel.json').write_text(json.dumps(config, separators=(',', ':')) + '\n')
+          shutil.rmtree('.source')
+          assert len(html) == 62369
+      - name: Commit canonical source
+        run: |
+          git config user.name "LumaDeck Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "Publish ultra Liquid Glass LumaDeck"
+          git push
