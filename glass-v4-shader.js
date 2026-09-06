@@ -30,9 +30,9 @@ vec3 spectral(vec2 p,vec2 n,vec2 tangent,float scatter,float shift){
  return vec3(s0.r*.45+s1.r*.35+s2.r*.20,s2.g*.20+s3.g*.60+s4.g*.20,s4.b*.20+s5.b*.35+s6.b*.45);
 }
 void main(){
- vec2 p=gl_FragCoord.xy;float best=-1e9;int bi=-1;
- // Nested glass resolves to its nearest local boundary, always sampling original backdrop.
- for(int i=0;i<16;i++){if(i>=uCount)break;vec4 s=uShape[i];float d=sdRound(p-s.xy,s.zw,uRadius[i]);if(d<=0.0&&d>best){best=d;bi=i;}}
+ vec2 p=gl_FragCoord.xy;float best=-1e9,bestArea=1e30;int bi=-1;
+ // Small nested lenses win over their parent material and still sample original backdrop.
+ for(int i=0;i<16;i++){if(i>=uCount)break;vec4 s=uShape[i];float d=sdRound(p-s.xy,s.zw,uRadius[i]);float area=s.z*s.w;if(d<=0.0&&area<bestArea){bestArea=area;best=d;bi=i;}}
  if(bi<0){if(uViewer>.5)outColor=vec4(0.0);else outColor=vec4(bg(p),1.0);return;}
  vec4 s=uShape[bi];float mode=uMode[bi],press=uPress[bi],minDim=max(2.0,min(s.z,s.w)*2.0),eps=max(.75,uDpr*.60);
  float dx=sdRound((p+vec2(eps,0.0))-s.xy,s.zw,uRadius[bi])-sdRound((p-vec2(eps,0.0))-s.xy,s.zw,uRadius[bi]);
