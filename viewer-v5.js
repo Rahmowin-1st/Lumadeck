@@ -9,8 +9,10 @@ const viewer=$('#viewer');if(viewer){
   const isPdf=()=>($('#viewerKind')?.textContent||'').toUpperCase().includes('PDF');
   const activeIndex=()=>{const i=thumbs().findIndex(x=>x.classList.contains('active'));return i<0?0:i;};
   function setPlaying(v){playing=!!v;viewer.classList.toggle('playing',playing);play.classList.toggle('playing',playing);play.querySelector('.viewer-play-icon').textContent=playing?'Ⅱ':'▶';play.setAttribute('aria-label',playing?'Pause presentation':'Play presentation');status.classList.toggle('show',playing);if(!playing){clearTimeout(timer);timer=null;}}
+  function restartSlideReveal(){const img=$('#mainSlide');if(!img?.src)return;try{const u=new URL(img.src,location.href);if(u.pathname.includes('/api/preview')){u.searchParams.set('_play',String(Date.now()));img.src=u.toString();}}catch{}}
   function animateCurrent(){
     const frame=$('#slideFrame'),img=$('#mainSlide');if(!frame||!img)return;
+    restartSlideReveal();
     frame.getAnimations().forEach(a=>a.cancel());img.getAnimations().forEach(a=>a.cancel());
     frame.animate([{opacity:.18,transform:'translate3d(0,18px,0) scale(.965)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}],{duration:620,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'});
     img.animate([{transform:'scale(1.035)'},{transform:'scale(1)'}],{duration:2850,easing:'cubic-bezier(.2,.72,.25,1)',fill:'both'});
