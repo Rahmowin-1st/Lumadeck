@@ -1,7 +1,7 @@
 self.addEventListener('push',event=>{
-  let data={};try{data=event.data?.json?.()||{}}catch{data={body:event.data?.text?.()||'Your presentation is ready.'}}
+  let data={};try{data=event.data?.json?.()||{}}catch{data={body:event.data?.text?.()||'Your presentation is ready✅'}}
   const title=data.title||'LumaDeck';
-  const options={body:data.body||'Your presentation is ready to view and download.',tag:data.tag||'lumadeck-ready',renotify:true,data:{url:data.url||'/',jobId:data.jobId||null},vibrate:[120,60,120]};
+  const options={body:data.body||'Your presentation is ready✅',icon:data.icon||'/lumadeck-icon.svg',badge:data.badge||'/lumadeck-icon.svg',tag:data.tag||'lumadeck-ready',renotify:true,data:{url:data.url||'/',jobId:data.jobId||null},vibrate:[120,60,120]};
   event.waitUntil(self.registration.showNotification(title,options));
 });
 self.addEventListener('notificationclick',event=>{
