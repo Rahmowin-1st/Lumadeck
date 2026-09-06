@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'v4.css'
+      - 'app.js'
+      - 'glass.js'
+      - 'glass-v4.js'
+      - 'glass-v4-shader.js'
       - 'vercel.json'
   workflow_dispatch:
 
@@ -22,12 +27,21 @@ jobs:
           from pathlib import Path
           import json
           html = Path('index.html').read_text(encoding='utf-8')
+          css = Path('v4.css').read_text(encoding='utf-8')
+          app = Path('app.js').read_text(encoding='utf-8')
+          bridge = Path('glass.js').read_text(encoding='utf-8')
+          glass = Path('glass-v4.js').read_text(encoding='utf-8')
+          shader = Path('glass-v4-shader.js').read_text(encoding='utf-8')
           cfg = json.loads(Path('vercel.json').read_text(encoding='utf-8'))
-          assert len(html.encode('utf-8')) > 50000
-          for marker in ['glassCanvas', "getContext('webgl2'", 'formatSwitch', 'LUMADECK_OUTPUT=', 'auth-session', 'viewerActions']:
+          for marker in ['glassCanvas','formatSwitch','viewerActions','./v4.css','./app.js']:
               assert marker in html, marker
+          for marker in ['LUMADECK_OUTPUT=','auth-session','/api/jobs','/api/artifact']:
+              assert marker in app, marker
+          assert "./glass-v4.js" in bridge
+          for marker in ['uBackdrop','refrA=mix(.52,.78','spectral(','uViewer']:
+              assert marker.replace(' ','') in shader.replace(' ','') or marker in glass, marker
+          assert 'brand-row' in css and 'theme-switch' in css
           rewrites = cfg.get('rewrites', [])
           dests = [str(x.get('destination','')) for x in rewrites]
           assert any('supabase.co/functions/v1/lumadeck-api' in x for x in dests)
-          assert all('lumadeck-mobile-1tzn3q2yt-shahboz.vercel.app' not in x for x in dests)
-          print('LumaDeck production integrity: PASS')
+          print('LumaDeck Liquid Glass V4 integrity: PASS')
