@@ -1,0 +1,133 @@
+name: LumaDeck Liquid Glass V4 Upgrade
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/liquid-glass-v4-upgrade.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply canonical Liquid Glass V4 tuning
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          MARK='LUMADECK_LG_V4'
+
+          css = r'''
+          /* LUMADECK_LG_V4 — canonical Liquid Glass hierarchy + mobile polish */
+          :root{--muted:#59645e;--line:rgba(16,42,31,.115);--surface:rgba(250,252,248,.88);--surface2:rgba(255,255,255,.70);--shadow:0 26px 76px rgba(24,49,37,.105)}
+          :root[data-theme='dark']{--muted:#a9b4ae;--line:rgba(255,255,255,.105);--surface:rgba(14,22,18,.88);--surface2:rgba(23,33,28,.72)}
+          .app-shell{background:transparent!important}
+          .ambient{opacity:0!important}
+          .no-webgl .ambient{opacity:1!important}
+          .app-head{position:sticky;top:max(6px,var(--safe-top));margin:6px auto 0;padding:0;width:calc(100% - 20px);border-radius:0;z-index:40;background:transparent!important}
+          .brand-row{min-height:58px;padding:7px 8px;border-radius:29px}
+          .brand{gap:9px}.brand-mark{width:40px;height:40px;border-radius:15px;font-size:17px;box-shadow:0 10px 28px rgba(8,104,79,.20),inset 0 1px rgba(255,255,255,.30)}
+          .brand-copy b{font-size:15px;letter-spacing:-.02em}.brand-copy small{font-size:7px;letter-spacing:.12em;margin-top:3px}
+          .account-btn{min-width:78px;max-width:142px;height:40px;padding:0 11px;border-radius:20px;background:color-mix(in srgb,var(--surface2) 48%,transparent)!important;border:1px solid color-mix(in srgb,var(--line) 75%,transparent)!important;box-shadow:inset 0 1px rgba(255,255,255,.16)!important}
+          .account-btn span:last-child{font-size:10.5px}.account-dot{width:6px;height:6px;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 11%,transparent)}
+          .theme-switch{height:46px;margin:7px auto 0;border-radius:23px;padding:3px;width:96%;max-width:430px}
+          .theme-option{height:40px;font-size:10px;gap:5px}.theme-icon{font-size:14px}.theme-bubble{left:3px;top:3px;height:40px;border-radius:20px}
+          .home{padding:18px 11px calc(44px + var(--safe-bottom))}
+          .hero{padding:10px 7px 19px}.eyebrow{font-size:8.5px;letter-spacing:.18em}
+          .hero h1{font-size:clamp(47px,13.4vw,65px);line-height:.91;letter-spacing:-.062em;margin:12px 0 14px}.hero h1 em{letter-spacing:-.04em}
+          .hero-sub{font-size:13.5px;line-height:1.52;max-width:410px;color:var(--muted)}
+          .steps{margin-top:17px;gap:6px;font-size:9px}.steps b{width:22px;height:22px;border-radius:9px}.steps i{max-width:24px}
+          .surface{background:linear-gradient(160deg,color-mix(in srgb,var(--surface) 98%,transparent),color-mix(in srgb,var(--surface2) 88%,transparent));border-color:var(--line);box-shadow:0 22px 64px rgba(25,50,38,.09),inset 0 1px rgba(255,255,255,.25)}
+          .surface:before{background:radial-gradient(circle at 91% 2%,rgba(72,202,158,.12),transparent 31%)}
+          .composer-shell{border-radius:36px;padding:19px 17px 15px}.composer-label strong{font-size:21px}.studio-live{font-size:9px}
+          .build-bar{grid-template-columns:1.28fr .72fr;gap:8px;margin:16px 0 0}.format-block>small,.language-lock>small{font-size:7px;letter-spacing:.16em}
+          .format-switch{height:44px;border-radius:20px;padding:3px;background:color-mix(in srgb,var(--soft) 38%,var(--surface2))!important;border:1px solid color-mix(in srgb,var(--line) 85%,transparent)!important;box-shadow:inset 0 1px rgba(255,255,255,.28)!important}
+          .format-bubble{top:3px;height:38px;border-radius:17px}.format-option{height:38px;font-size:10px;color:color-mix(in srgb,var(--ink) 58%,var(--muted));font-weight:900}.format-option.active{color:var(--ink)}
+          .language-lock{height:44px;border-radius:19px;padding:0 11px;background:color-mix(in srgb,var(--surface2) 76%,transparent);box-shadow:inset 0 1px rgba(255,255,255,.24)}.language-lock span{font-size:10px}
+          #prompt{min-height:238px;max-height:58vh;font-size:17px;line-height:1.48;padding:20px 2px 11px}#prompt::placeholder{color:color-mix(in srgb,var(--muted) 76%,transparent)}
+          .composer-hint{padding:11px 2px 12px;font-size:9px}
+          .send-btn{height:58px;border-radius:29px;padding:0 10px 0 18px;background:linear-gradient(135deg,#0b745b,#0b8768 52%,#07523f)!important;color:#fff!important;box-shadow:0 14px 34px rgba(7,100,76,.22),inset 0 1px rgba(255,255,255,.24)!important;border:1px solid rgba(255,255,255,.13)!important;transition:transform .34s cubic-bezier(.16,1,.3,1),filter .2s}.send-btn:active{transform:scale(.982);filter:saturate(1.08)}.send-btn small{color:rgba(255,255,255,.64)}.send-btn b{color:#fff}.send-arrow{width:40px;height:40px;box-shadow:inset 0 1px rgba(255,255,255,.25),0 8px 20px rgba(0,0,0,.16)}
+          .history-section{margin-top:12px;border-radius:34px;padding:17px 16px}.section-head h2{font-size:25px}.empty-state{min-height:185px;padding:20px}.empty-state p{font-size:10px}
+          .trust-row{padding:17px 0 0;opacity:.86}
+          .viewer-topbar{left:7px;right:7px;border-radius:26px}.viewer-actions{left:7px;right:7px;border-radius:28px}.sheet-card{border-radius:36px}
+          .no-webgl .brand-row,.no-webgl .theme-switch,.no-webgl .viewer-topbar,.no-webgl .viewer-actions,.no-webgl .sheet-card{background:color-mix(in srgb,var(--surface2) 82%,transparent)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+          @media(max-width:360px){.app-head{width:calc(100% - 14px)}.home{padding-left:8px;padding-right:8px}.hero h1{font-size:45px}.theme-switch{width:100%}.brand-copy small{display:none}.account-btn{max-width:116px}.build-bar{grid-template-columns:1.2fr .8fr}}
+          '''
+
+          def patch_shader(s):
+              s=s.replace("float best=1e9; int bi=-1;\n    for(int i=0;i<16;i++){\n      if(i>=uCount) break;\n      vec4 s=uShape[i];\n      float d=sdRound(p-s.xy,s.zw,uRadius[i]);\n      if(d<best){best=d;bi=i;}\n    }\n    if(bi<0 || best>0.){outColor=vec4(0.);return;}","float best=-1e9; int bi=-1;\n    for(int i=0;i<16;i++){\n      if(i>=uCount) break;\n      vec4 s=uShape[i];\n      float d=sdRound(p-s.xy,s.zw,uRadius[i]);\n      if(d<=0. && d>best){best=d;bi=i;}\n    }\n    if(bi<0){outColor=vec4(bg(p),1.);return;}")
+              s=s.replace("float refrH=mix(.24,.28,clearStep);\n    refrH=mix(refrH,.24,interactiveStep);\n    refrH=mix(refrH,.38,thickStep);\n    float refrA=mix(.42,.65,clearStep);\n    refrA=mix(refrA,.52,interactiveStep);\n    refrA=mix(refrA,.82,thickStep);\n    float chroma=mix(.28,.48,clearStep);\n    chroma=mix(chroma,.34,interactiveStep);\n    chroma=mix(chroma,.32,thickStep);\n    float scatter=mix(1.4,.30,clearStep);\n    scatter=mix(scatter,1.15,interactiveStep);\n    scatter=mix(scatter,2.0,thickStep);\n    float saturation=mix(1.08,1.12,clearStep);\n    saturation=mix(saturation,1.09,interactiveStep);\n    saturation=mix(saturation,1.05,thickStep);\n    float tintAlpha=mix(.06,.025,clearStep);\n    tintAlpha=mix(tintAlpha,.055,interactiveStep);\n    tintAlpha=mix(tintAlpha,.08,thickStep);\n    float rimAlpha=mix(.42,.38,clearStep);\n    rimAlpha=mix(rimAlpha,.46,interactiveStep);\n    rimAlpha=mix(rimAlpha,.52,thickStep);","float refrH=mix(.23,.30,clearStep);\n    refrH=mix(refrH,.25,interactiveStep);\n    refrH=mix(refrH,.36,thickStep);\n    float refrA=mix(.52,.78,clearStep);\n    refrA=mix(refrA,.64,interactiveStep);\n    refrA=mix(refrA,.90,thickStep);\n    float depthE=mix(.58,.82,clearStep);\n    depthE=mix(depthE,.68,interactiveStep);\n    depthE=mix(depthE,.98,thickStep);\n    float chroma=mix(.32,.58,clearStep);\n    chroma=mix(chroma,.38,interactiveStep);\n    chroma=mix(chroma,.36,thickStep);\n    float scatter=mix(1.00,.18,clearStep);\n    scatter=mix(scatter,.75,interactiveStep);\n    scatter=mix(scatter,1.40,thickStep);\n    float saturation=mix(1.10,1.16,clearStep);\n    saturation=mix(saturation,1.12,interactiveStep);\n    saturation=mix(saturation,1.07,thickStep);\n    float tintAlpha=mix(.035,.015,clearStep);\n    tintAlpha=mix(tintAlpha,.030,interactiveStep);\n    tintAlpha=mix(tintAlpha,.055,thickStep);\n    float rimAlpha=mix(.48,.44,clearStep);\n    rimAlpha=mix(rimAlpha,.56,interactiveStep);\n    rimAlpha=mix(rimAlpha,.60,thickStep);")
+              s=s.replace("vec2 depthDir=normalize(n+radial*.48);\n    float pressBoost=1.+press*(interactiveStep>.5?0.12:0.06);","vec2 depthDir=normalize(n+radial*depthE);\n    float pressBoost=1.+press*(interactiveStep>.5?0.16:0.08);")
+              s=s.replace("sampleP-=toP*press*.055*bulge;","sampleP-=toP*press*.075*bulge;")
+              s=s.replace("float adaptive=tintAlpha + (uDark>.5?bright*.08:darkBackdrop*.045);","float adaptive=tintAlpha + (uDark>.5?bright*.055:darkBackdrop*.028);")
+              s=s.replace("float rim=1.-smoothstep(0.,max(4.*uDpr,minDim*.052),edgeDepth);","float rim=1.-smoothstep(0.,max(3.5*uDpr,minDim*.044),edgeDepth);")
+              s=s.replace("col+=vec3(rim*facing*rimAlpha*(1.+press*.42));","col+=vec3(rim*facing*rimAlpha*(1.+press*.55));")
+              s=s.replace("float alpha=mix(.94,.90,clearStep);\n    alpha=mix(alpha,.95,thickStep);\n    outColor=vec4(col,alpha);","outColor=vec4(col,1.);")
+              return s
+
+          def enrich_backdrop(s):
+              needle="    backdropDirty=false;"
+              if 'LUMA_BG_V4' in s or needle not in s: return s
+              extra=r'''    // LUMA_BG_V4 — visible source is the same texture sampled by the lens.
+    ctx.save();
+    ctx.globalAlpha=dark?.12:.16;
+    ctx.strokeStyle=dark?'#bfe9da':'#0c6f56';ctx.lineWidth=Math.max(1,dpr*.7);
+    ctx.beginPath();ctx.moveTo(w*.08,h*.155);ctx.lineTo(w*.92,h*.155);ctx.stroke();
+    ctx.beginPath();ctx.arc(w*.82,h*.27,w*.18,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.arc(w*.82,h*.27,w*.10,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle=dark?'#dff8ef':'#163d31';ctx.font=`800 ${Math.round(8.5*dpr)}px sans-serif`;ctx.letterSpacing=`${Math.round(1.2*dpr)}px`;
+    ctx.fillText('LUMADECK  /  CREATE  /  PRESENT',w*.07,h*.115);
+    ctx.globalAlpha=dark?.08:.10;ctx.font=`700 ${Math.round(28*dpr)}px sans-serif`;ctx.fillText('BUILD',w*.58,h*.34);
+    ctx.restore();
+'''
+              return s.replace(needle,extra+needle,1)
+
+          def patch_file(path):
+              p=Path(path);s=p.read_text(encoding='utf-8')
+              s=patch_shader(s);s=enrich_backdrop(s)
+              p.write_text(s,encoding='utf-8')
+
+          # Keep the source modules aligned with the self-contained production HTML.
+          patch_file('glass.js')
+
+          sp=Path('styles.css');st=sp.read_text(encoding='utf-8')
+          if MARK not in st: st+='\n'+css+'\n'
+          sp.write_text(st,encoding='utf-8')
+
+          ip=Path('index.html');html=ip.read_text(encoding='utf-8')
+          html=html.replace('<header class="app-head glass-host" data-glass="regular" data-radius="32">','<header class="app-head">',1)
+          html=html.replace('<div class="brand-row">','<div class="brand-row glass-host" data-glass="regular" data-radius="29">',1)
+          html=html.replace('class="account-btn glass-host" data-glass="clear" data-radius="22"','class="account-btn"',1)
+          html=html.replace('class="format-switch glass-host" data-glass="regular" data-radius="22"','class="format-switch"',1)
+          html=html.replace('class="send-btn glass-host" data-glass="interactive" data-radius="31"','class="send-btn"',1)
+          if MARK not in html: html=html.replace('</style>','\n'+css+'\n</style>',1)
+          html=patch_shader(html);html=enrich_backdrop(html)
+          ip.write_text(html,encoding='utf-8')
+
+          # Guardrails: flagship material + hierarchy must be present.
+          out=ip.read_text(encoding='utf-8')
+          assert MARK in out
+          assert 'outColor=vec4(bg(p),1.);return;' in out
+          assert 'float refrA=mix(.52,.78,clearStep);' in out
+          assert '<header class="app-head">' in out
+          assert 'brand-row glass-host' in out
+          assert len(out.encode('utf-8')) > 50000
+          print('Liquid Glass V4 patch: PASS')
+      - name: Commit upgraded production source
+        run: |
+          git config user.name 'LumaDeck Design Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html styles.css glass.js
+          if git diff --cached --quiet; then
+            echo 'No changes needed'
+            exit 0
+          fi
+          git commit -m 'Upgrade LumaDeck to canonical Liquid Glass V4'
+          git push origin HEAD:main
